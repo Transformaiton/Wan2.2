@@ -1,0 +1,36 @@
+Wan 2.2
+Copyright 2024-2025 The Alibaba Wan Team Authors
+
+This repository is a public fork of Wan-Video/Wan2.2:
+https://github.com/Wan-Video/Wan2.2
+
+The original work is distributed under the Apache License, Version 2.0.
+The license text is LICENSE.txt. It is unchanged in this fork.
+
+Files modified or added by Transformaiton.com (https://transformaiton.com/):
+
+- README.md
+  The customer guide at the top of this file was written by
+  Transformaiton.com. The Wan team's original README is preserved below
+  that guide, under "Original project documentation".
+- docs/INSTALL.md
+  Added by Transformaiton.com.
+- docs/USAGE.md
+  Added by Transformaiton.com.
+- NOTICE
+  Added by Transformaiton.com.
+
+Transformaiton.com did not modify the Python model code.
+
+Transformaiton.com is an AI consultancy for small businesses. It is not
+affiliated with, endorsed by, or sponsored by the Wan team, Alibaba Group,
+or Alibaba Cloud.
+
+The model weights are not in this git repository. Wan-AI publishes them
+separately. Each checkpoint has its own license terms on its model card.
+When this notice was written, the Wan-AI model cards for Wan2.2-TI2V-5B,
+Wan2.2-T2V-A14B, Wan2.2-I2V-A14B, Wan2.2-S2V-14B, and Wan2.2-Animate-14B
+listed Apache-2.0, together with the use conditions printed on those cards
+and in the original README. Read the model card for the checkpoint you
+download before you use the weights. If a card and this notice disagree,
+the model card governs the weights.
