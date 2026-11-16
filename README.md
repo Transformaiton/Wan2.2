@@ -1,3 +1,218 @@
+# Wan 2.2 by Transformaiton.com
+
+> **Modified by Transformaiton.com.** The customer guide in this README was written by [Transformaiton.com](https://transformaiton.com/). The Wan team's original README is preserved in full under [Original project documentation](#original-project-documentation). The Python model code is unchanged. See [NOTICE](NOTICE) for the list of files this fork adds or edits. [LICENSE.txt](LICENSE.txt) is the original Apache License, Version 2.0, and it is unchanged.
+
+This repository is Transformaiton.com's public copy of **Wan 2.2**, an open video-generation model from the [Wan team](https://github.com/Wan-Video/Wan2.2) at Alibaba. It can build a short clip from a text prompt, from a still image, from speech, or by moving a character to match another video.
+
+[Transformaiton.com](https://transformaiton.com/) is an AI consultancy for small businesses. We added this guide so a business can tell what the model does, what hardware it needs, and how to run the smallest checkpoint. We are not affiliated with, endorsed by, or sponsored by the Wan team, Alibaba Group, or Alibaba Cloud.
+
+- Install, step by step: [docs/INSTALL.md](docs/INSTALL.md)
+- Everyday use, prompts, and the other tasks: [docs/USAGE.md](docs/USAGE.md)
+- Upstream code and the research write-up: [github.com/Wan-Video/Wan2.2](https://github.com/Wan-Video/Wan2.2) · [paper](https://arxiv.org/abs/2503.20314) · [wan.video](https://wan.video)
+
+## What it does, in plain English
+
+You describe a shot, or you hand the model a picture, and it writes a video of a few seconds. The smallest model, **TI2V-5B**, runs at 720p and 24 frames per second. Its default length is 121 frames, about 5 seconds. T2V-A14B, I2V-A14B, and S2V-14B default to 81 frames at 16 fps, also about 5 seconds. Animate-14B defaults to 77 frames at 30 fps.
+
+Five checkpoints ship separately from this git repository. You download the one you need:
+
+| Model | What you ask it for | Where a small business starts |
+| --- | --- | --- |
+| **TI2V-5B** | Text-to-video, or a still image plus text, at 720p | Start here. It is the one that fits a consumer 24 GB GPU. |
+| **T2V-A14B** | Text-to-video at 480p or 720p | A larger MoE model. The single-GPU example is written for an 80 GB GPU. |
+| **I2V-A14B** | A still image to video at 480p or 720p | Same hardware class as T2V-A14B. |
+| **S2V-14B** | Speech (or generated speech) plus a still, to video | Single-GPU example is written for an 80 GB GPU. |
+| **Animate-14B** | A character still plus a motion video, for animation or replacement | Advanced. Preprocessing comes first. No VRAM figure is published in the original README. |
+
+The A14B models are a mixture-of-experts design: about 27 billion parameters in total, with about 14 billion active on each step. TI2V-5B is one 5-billion-parameter model with a higher-compression video autoencoder. The original README and the paper describe the architecture. This guide does not restate the research.
+
+## What a small business can use it for
+
+The useful output is a short shot you can review and then cut into a larger piece.
+
+- **Product videos.** A mug, a garment, a tool, or a packaged good, with one camera move and one setting. Describe the product, the surface, the light, and the move.
+- **Social ads.** A 5-second shot for a paid social post or a story. Titles, a voiceover, and a longer edit still happen in your editor. The model writes the shot.
+- **Animating product photos.** Pass a real product photo with `--image` and describe a small motion, such as a slow move toward the product. The photo is the official image-to-video path. TI2V-5B and I2V-A14B both do this. TI2V-5B is the one to try first.
+
+You are responsible for what you publish. Check the clip against the real product before it goes on an ad. The model can invent details. The Wan team's license text also limits harmful and illegal uses. That text is quoted under [Credits, license, and affiliation](#credits-license-and-affiliation).
+
+## Official examples already in this project
+
+The pictures and the demo below were published by the Wan team. Transformaiton.com did not generate them, and this fork does not add sample outputs of its own.
+
+The still used by the image-to-video commands is `examples/i2v_input.JPG`.
+
+<img src="examples/i2v_input.JPG" alt="Official Wan 2.2 example input: a white cat in sunglasses on a surfboard" width="480"/>
+
+The animation and replacement examples use these reference stills, plus the motion videos next to them in the repo (`examples/wan_animate/animate/video.mp4` and `examples/wan_animate/replace/video.mp4`).
+
+<img src="examples/wan_animate/animate/image.jpeg" alt="Official Wan-Animate reference still shipped in examples/wan_animate/animate/" width="360"/>
+<img src="examples/wan_animate/replace/image.jpeg" alt="Official Wan-Animate replacement reference still shipped in examples/wan_animate/replace/" width="360"/>
+
+The demo video from the Wan team's README:
+
+<div align="center">
+  <video src="https://github.com/user-attachments/assets/b63bfa58-d5d7-4de6-a1a2-98970b06d9a7" width="70%"></video>
+</div>
+
+More official clips are on [wan.video](https://wan.video), the [TI2V-5B Hugging Face Space](https://huggingface.co/spaces/Wan-AI/Wan-2.2-5B), the [animation project page](https://humanaigc.github.io/wan-animate), and the [speech-to-video project page](https://humanaigc.github.io/wan-s2v-webpage). A full list of the example files in this repo is in [docs/USAGE.md](docs/USAGE.md#official-examples-already-in-the-project).
+
+## Hardware
+
+<a id="hardware"></a>
+
+Plan from the original README's written minimums and from the Wan team's measured table (`assets/comp_effic.png`). The table reports **seconds / peak GPU memory in GB**. The test setup is quoted in the original README: offload is on for the single-GPU numbers, prompt extension is off, and the figures are averages after warm-up.
+
+<img src="assets/comp_effic.png" alt="Wan team table of generation time and peak GPU memory" width="100%"/>
+
+| Model and job | What to budget |
+| --- | --- |
+| TI2V-5B, 720p, 1 GPU | At least **24 GB**. An RTX 4090 is the card named in the original README. Their measurement on one 4090 peaks at about **22.9 GB** (text, 535 seconds) or **22.8 GB** (image, 525 seconds). |
+| TI2V-5B, 720p, 4 or 8 GPUs | The same table stays near **23 GB per GPU**, because that test still uses offload. Extra GPUs cut the time (about 227–231 seconds on 4 GPUs, about 157–160 seconds on 8). |
+| T2V-A14B or I2V-A14B, 1 GPU | The example command is documented at **at least 80 GB**. Measured peaks with offload are about **41 GB** at 480p and about **60 GB** at 720p on H20, A100/A800, and H100/H800. Buy or rent to the 80 GB figure. |
+| T2V-A14B or I2V-A14B, 4 GPUs | About **41 GB** per GPU at 480p and about **52 GB** per GPU at 720p. |
+| T2V-A14B or I2V-A14B, 8 GPUs | About **26 GB** per GPU at 480p and about **37 GB** per GPU at 720p. |
+| S2V-14B, 1 GPU | Documented at **at least 80 GB**. This model is not in the timing table. |
+| Animate-14B | No VRAM number in the original README or the table. Treat it as a 14B model. |
+
+The 4090 row in the table is only TI2V-5B. The table does not show a 14B model on a 24 GB card. A longer `frame_num` than the default uses more memory than these measurements.
+
+Checkpoint downloads are large. Hugging Face reports about **54 GB** for TI2V-5B, **126 GB** for I2V-A14B, **241 GB** for T2V-A14B, **49 GB** for S2V-14B, and **73 GB** for Animate-14B. Details and the install steps are in [docs/INSTALL.md](docs/INSTALL.md).
+
+## Cheaper ways to run it
+
+<a id="cheaper-ways-to-run-it"></a>
+
+**Try it in a browser before you buy a GPU.** The Wan team already hosts these:
+
+- [TI2V-5B on Hugging Face Spaces](https://huggingface.co/spaces/Wan-AI/Wan-2.2-5B)
+- [wan.video](https://wan.video)
+- [ComfyUI Wan 2.2 tutorial](https://docs.comfy.org/tutorials/video/wan/wan2_2) (and the [Chinese tutorial](https://docs.comfy.org/zh-CN/tutorials/video/wan/wan2_2))
+- Speech-to-video: [Hugging Face](https://huggingface.co/spaces/Wan-AI/Wan2.2-S2V) and [ModelScope](https://www.modelscope.cn/studios/Wan-AI/Wan2.2-S2V)
+- Animation: [Hugging Face](https://huggingface.co/spaces/Wan-AI/Wan2.2-Animate) and [ModelScope](https://www.modelscope.cn/studios/Wan-AI/Wan2.2-Animate)
+- Diffusers packages, if you already use Diffusers: [TI2V-5B](https://huggingface.co/Wan-AI/Wan2.2-TI2V-5B-Diffusers), [T2V-A14B](https://huggingface.co/Wan-AI/Wan2.2-T2V-A14B-Diffusers), [I2V-A14B](https://huggingface.co/Wan-AI/Wan2.2-I2V-A14B-Diffusers)
+
+**Rent a GPU by the hour** if the demo is enough to prove the look and you want to run the real checkpoint. A 24 GB NVIDIA card is the documented starting point for TI2V-5B. An 80 GB card matches the written single-GPU examples for the 14B models. RunPod, Vast.ai, Lambda, and the GPU instances on AWS, Google Cloud, and Azure commonly list cards in this range. Compare the current hourly price with the provider. Transformaiton.com does not operate those services and does not set their prices.
+
+The original README also lists community projects aimed at lower memory or faster runs, including [LightX2V](https://github.com/ModelTC/LightX2V), [DiffSynth-Studio](https://github.com/modelscope/DiffSynth-Studio), and [Kijai's ComfyUI wrapper](https://github.com/kijai/ComfyUI-WanVideoWrapper). They are third-party. Read their docs.
+
+## Install
+
+The full procedure, including the PyTorch, `flash_attn`, and download steps, is [docs/INSTALL.md](docs/INSTALL.md). The short path on Linux:
+
+```bash
+git clone https://github.com/Transformaiton/Wan2.2.git
+cd Wan2.2
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+```
+
+Install a CUDA build of PyTorch 2.4 or newer from [pytorch.org](https://pytorch.org/get-started/locally/), then:
+
+```bash
+pip install -r requirements.txt
+pip install "huggingface_hub[cli]"
+huggingface-cli download Wan-AI/Wan2.2-TI2V-5B --local-dir ./Wan2.2-TI2V-5B
+```
+
+If `flash_attn` fails to compile, install the other requirements first and `flash_attn` last. The original README says the same thing. The root [INSTALL.md](INSTALL.md) is the existing short note for `pip install .` and Poetry. Either install path can be used. The customer steps follow `requirements.txt`.
+
+## Quick start: TI2V-5B
+
+Run this from the repository root after the install. The size is quoted so the shell does not treat `*` as a wildcard. The prompt is the official example.
+
+```bash
+python generate.py \
+  --task ti2v-5B \
+  --size '1280*704' \
+  --ckpt_dir ./Wan2.2-TI2V-5B \
+  --offload_model True \
+  --convert_model_dtype \
+  --t5_cpu \
+  --prompt "Two anthropomorphic cats in comfy boxing gear and bright gloves fight intensely on a spotlighted stage"
+```
+
+The same model animates a still when you add `--image`. This command uses the official cat photo and the official prompt:
+
+```bash
+python generate.py \
+  --task ti2v-5B \
+  --size '1280*704' \
+  --ckpt_dir ./Wan2.2-TI2V-5B \
+  --offload_model True \
+  --convert_model_dtype \
+  --t5_cpu \
+  --image examples/i2v_input.JPG \
+  --prompt "Summer beach vacation style, a white cat wearing sunglasses sits on a surfboard. The fluffy-furred feline gazes directly at the camera with a relaxed expression. Blurred beach scenery forms the background featuring crystal-clear waters, distant green hills, and a blue sky dotted with white clouds. The cat assumes a naturally relaxed posture, as if savoring the sea breeze and warm sunlight. A close-up shot highlights the feline's intricate details and the refreshing atmosphere of the seaside."
+```
+
+The video is written in the current directory unless you set `--save_file`. On one RTX 4090, expect on the order of nine minutes for a 720p clip once the weights are loaded, which matches both the original "under 9 minutes" statement and the table above.
+
+To point the same command at your own product photo, change `--image` and `--prompt`, and set `--save_file product-clip.mp4`. A worked version of that edit is in [docs/USAGE.md](docs/USAGE.md#a-product-photo). Commands for the 14B models, speech-to-video, and animation are in that file and in the original documentation below.
+
+## Troubleshooting and FAQ
+
+**The script asks for a checkpoint directory.** The weights are a separate download. `--ckpt_dir ./Wan2.2-TI2V-5B` has to point at the folder from `huggingface-cli download`.
+
+**CUDA out of memory.** Use the TI2V-5B command above, including `--offload_model True --convert_model_dtype --t5_cpu`. That is the 24 GB setup. The 14B single-GPU examples are written for 80 GB.
+
+**`flash_attn` fails to install, or a run says FlashAttention is unavailable.** Install every other package in `requirements.txt`, then install `flash_attn`. The generator calls flash attention. A missing install stops the run. Steps are in [docs/INSTALL.md](docs/INSTALL.md).
+
+**`Unsupport size` or a shell glob error.** TI2V-5B accepts only `'1280*704'` and `'704*1280'`. Keep the quotes.
+
+**The first launch looks stuck.** The checkpoint is loading from disk. After that, a 720p TI2V-5B clip is about nine minutes on one RTX 4090 in the Wan team's measurement.
+
+**Can I skip the GPU and still see a video?** Use the hosted Spaces and [wan.video](https://wan.video) linked above. The local `generate.py` path uses CUDA.
+
+**Who owns the output, and can I put it in an ad?** The Wan team says the models are Apache 2.0 and that they claim no rights over generated contents, as long as your use follows the license. You are accountable for the clip. Read the license section below and the model card. Transformaiton.com does not give legal advice.
+
+More answers, including prompt-extension failures and multi-GPU errors, are in [docs/USAGE.md](docs/USAGE.md#troubleshooting-and-faq).
+
+## Credits, license, and affiliation
+
+<a id="credits"></a>
+
+**Wan team (Alibaba).** Wan 2.2 was created by the Wan team. The code in this repository, the example media, the efficiency table, and the original README are theirs. The Python file headers read "Copyright 2024-2025 The Alibaba Wan Team Authors."
+
+- Code: [github.com/Wan-Video/Wan2.2](https://github.com/Wan-Video/Wan2.2)
+- Project: [wan.video](https://wan.video)
+- Models: [huggingface.co/Wan-AI](https://huggingface.co/Wan-AI/) and [ModelScope Wan-AI](https://modelscope.cn/organization/Wan-AI)
+- Paper: [Wan: Open and Advanced Large-Scale Video Generative Models](https://arxiv.org/abs/2503.20314)
+- English user guide linked from the upstream README: [User Guide (English)](https://alidocs.dingtalk.com/i/nodes/EpGBa2Lm8aZxe5myC99MelA2WgN7R35y)
+
+Please cite the Wan paper if you use the model in research. The BibTeX is in the original README.
+
+**This fork.** The customer text at the top of this README, [docs/INSTALL.md](docs/INSTALL.md), [docs/USAGE.md](docs/USAGE.md), and [NOTICE](NOTICE) were added by Transformaiton.com. Transformaiton.com is not affiliated with, endorsed by, or sponsored by the Wan team, Alibaba Group, or Alibaba Cloud. Product names belong to their owners.
+
+**Code license.** This repository is licensed under the Apache License, Version 2.0. The full text is [LICENSE.txt](LICENSE.txt), unchanged. Apache 2.0 lets you use, modify, and redistribute the code, including commercial use, if you keep the license, state your changes, and keep the original notices. This README is the change notice for the documentation. The model code was not modified.
+
+**Weight license.** The checkpoints are not in this git repository. Wan-AI publishes them, and each model card carries the weight license. As checked for this guide, the cards for [Wan2.2-TI2V-5B](https://huggingface.co/Wan-AI/Wan2.2-TI2V-5B), [Wan2.2-T2V-A14B](https://huggingface.co/Wan-AI/Wan2.2-T2V-A14B), [Wan2.2-I2V-A14B](https://huggingface.co/Wan-AI/Wan2.2-I2V-A14B), [Wan2.2-S2V-14B](https://huggingface.co/Wan-AI/Wan2.2-S2V-14B), and [Wan2.2-Animate-14B](https://huggingface.co/Wan-AI/Wan2.2-Animate-14B) are marked Apache-2.0. The original README states the same license and adds the use conditions: the authors claim no rights over your generated contents, and you are accountable for use that must not involve illegal content, harm, personal information used to cause harm, misinformation, or targeting vulnerable people. Read [LICENSE.txt](LICENSE.txt) and the model card you download. If a model card changes, the card governs the weights. Checkpoints also bundle components credited in the original acknowledgements, including the umt5 text encoder. Those components keep their own terms.
+
+The Wan team's logo, included here as attribution:
+
+<img src="assets/logo.png" alt="Wan project logo, published by the Wan team" width="280"/>
+
+## Contact
+
+<a id="contact"></a>
+
+Transformaiton.com helps small businesses put AI to work. Questions about this guide and this fork:
+
+- Website: [https://transformaiton.com/](https://transformaiton.com/)
+- Email: [info@transformaiton.com](mailto:info@transformaiton.com)
+- GitHub: [https://github.com/Transformaiton](https://github.com/Transformaiton)
+- This repository: [https://github.com/Transformaiton/Wan2.2](https://github.com/Transformaiton/Wan2.2)
+
+Questions for the Wan research or product teams go to the channels in the original README: [Discord](https://discord.gg/AKNgpMK4Yj) and the [WeChat group](https://gw.alicdn.com/imgextra/i2/O1CN01tqjWFi1ByuyehkTSB_!!6000000000015-0-tps-611-1279.jpg). Transformaiton.com does not operate those channels.
+
+## Original project documentation
+
+The Wan team's README follows, unchanged, including their install notes, model table, every generation command, the efficiency write-up, the citation, and their own contact links.
+
+<details>
+<summary>Original project documentation (Wan team README)</summary>
+
 # Wan2.2
 
 <p align="center">
@@ -506,3 +721,5 @@ We would like to thank the contributors to the [SD3](https://huggingface.co/stab
 ## Contact Us
 If you would like to leave a message to our research or product teams, feel free to join our [Discord](https://discord.gg/AKNgpMK4Yj) or [WeChat groups](https://gw.alicdn.com/imgextra/i2/O1CN01tqjWFi1ByuyehkTSB_!!6000000000015-0-tps-611-1279.jpg)!
 
+
+</details>
